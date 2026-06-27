@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TEMET NOSCE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant:wght@300;400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; padding: 0; background: #000000; }
+  * { box-sizing: border-box; }
+  ::selection { background: rgba(255,255,255,0.15); }
+
+  .mosaic { column-count: 4; column-gap: 0; line-height: 0; font-size: 0; width: 100%; }
+  .mosaic img { width: 100%; display: block; margin: 0; padding: 0; border: 0; break-inside: avoid; vertical-align: bottom; }
+
+  .scrim { position: fixed; inset: 0; background: rgba(0,0,0,0.46); pointer-events: none; z-index: 5; }
+  .vignette { position: fixed; inset: 0; pointer-events: none; z-index: 6;
+    background: radial-gradient(ellipse 120% 90% at 50% 50%, rgba(0,0,0,0) 38%, rgba(0,0,0,0.55) 100%); }
+
+  .titlewrap { position: fixed; inset: 0; z-index: 10; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; pointer-events: none; }
+  .title { font-family: 'Cormorant', serif; font-weight: 300; color: #ffffff;
+    font-size: clamp(40px, 9vw, 132px); letter-spacing: clamp(8px, 2.4vw, 40px);
+    text-transform: uppercase; line-height: 1; text-indent: clamp(8px, 2.4vw, 40px);
+    text-shadow: 0 2px 60px rgba(0,0,0,0.6); white-space: nowrap; }
+
+  .player { position: fixed; right: 22px; bottom: 22px; z-index: 20; display: flex;
+    align-items: center; gap: 11px; padding: 9px 15px 9px 9px; background: rgba(10,10,12,0.55);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.12); border-radius: 40px; cursor: pointer;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.5); user-select: none; }
+  .player .icon { width: 26px; height: 26px; min-width: 26px; border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.5); display: flex; align-items: center;
+    justify-content: center; color: #fff; font-size: 9px; line-height: 1; }
+  .player .meta { display: flex; flex-direction: column; line-height: 1.25; overflow: hidden; }
+  .player .track { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.06em;
+    color: #fff; white-space: nowrap; }
+  .player .status { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.18em;
+    text-transform: uppercase; color: rgba(255,255,255,0.4); white-space: nowrap; }
+
+  /* hidden youtube audio host */
+  #yt { position: fixed; width: 1px; height: 1px; left: -9999px; top: -9999px; opacity: 0; pointer-events: none; }
+</style>
+</head>
+<body>
+
+  <div class="mosaic" id="mosaic"></div>
+
+  <div class="scrim"></div>
+  <div class="vignette"></div>
+
+  <div class="titlewrap"><div class="title">Temet Nosce</div></div>
+
+  <div class="player" id="player">
+    <div class="icon" id="icon">&#9658;</div>
+    <div class="meta">
+      <span class="track">What's Up Danger</span>
+      <span class="status" id="status">Paused</span>
+    </div>
+  </div>
+
+  <div id="yt"></div>
+
+<script>
+  /* ---- 59 images, shuffled fresh on every page load (Fisher–Yates) ---- */
+  var files = [
+    "01.jpg","02.webp","03.webp","04.webp","05.jpg","06.webp","07.jpg","08.webp","09.jpg","10.webp",
+    "11.jpg","12.webp","13.jpg","14.jpg","15.jpg","16.jpg","17.jpg","18.jpg","19.webp","20.webp",
+    "21.jpg","22.webp","23.jpg","24.jpg","25.jpg","26.webp","27.jpg","28.jpg","29.webp","30.jpg",
+    "31.webp","33.jpg","34.jpg","35.webp","36.jpg","37.jpg","38.jpg","39.webp","40.webp",
+    "41.jpg","42.jpg","43.jpg","44.jpg","45.webp","46.jpg","47.jpg","48.webp","49.jpg","50.webp",
+    "51.jpg","52.jpg","53.webp","54.webp","55.jpg","56.webp","57.jpg","58.webp","59.jpg","60.jpg"
+  ];
+  for (var i = files.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var t = files[i]; files[i] = files[j]; files[j] = t;
+  }
+  var m = document.getElementById('mosaic');
+  m.innerHTML = files.map(function(f){
+    return '<img src="images/' + f + '" loading="lazy" alt="">';
+  }).join('');
+
+  /* ---- Real music: hidden YouTube player wired to the corner button ---- */
+  var YT_ID = "Y88LVU7MAe4"; // Blackway & Black Caviar - What's Up Danger (Official Audio)
+  var player, ready = false, pending = false, playing = false;
+  var iconEl = document.getElementById('icon');
+  var statusEl = document.getElementById('status');
+
+  var tag = document.createElement('script');
+  tag.src = "https://www.youtube.com/iframe_api";
+  document.head.appendChild(tag);
+
+  window.onYouTubeIframeAPIReady = function () {
+    player = new YT.Player('yt', {
+      height: '1', width: '1', videoId: YT_ID,
+      playerVars: { autoplay: 0, controls: 0, playsinline: 1, loop: 1, playlist: YT_ID },
+      events: {
+        'onReady': function(){ ready = true; if (pending) doPlay(); },
+        'onStateChange': function(e){
+          if (e.data === YT.PlayerState.PLAYING) setUI(true);
+          if (e.data === YT.PlayerState.PAUSED || e.data === YT.PlayerState.ENDED) setUI(false);
+        }
+      }
+    });
+  };
+
+  function setUI(on){
+    playing = on;
+    iconEl.innerHTML = on ? "&#10074;&#10074;" : "&#9658;";
+    statusEl.textContent = on ? "Now Playing" : "Paused";
+  }
+  function doPlay(){
+    if (!ready){ pending = true; return; }
+    try { player.unMute(); player.setVolume(80); player.playVideo(); } catch(e){}
+  }
+  function doPause(){ try { player.pauseVideo(); } catch(e){} }
+
+  document.getElementById('player').addEventListener('click', function(){
+    if (playing) doPause(); else doPlay();
+  });
+</script>
+</body>
+</html>

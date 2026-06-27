@@ -11,115 +11,141 @@
   html, body { margin: 0; padding: 0; background: #000000; }
   * { box-sizing: border-box; }
   ::selection { background: rgba(255,255,255,0.15); }
-
   .mosaic { column-count: 4; column-gap: 0; line-height: 0; font-size: 0; width: 100%; }
-  .mosaic img { width: 100%; display: block; margin: 0; padding: 0; border: 0; break-inside: avoid; vertical-align: bottom; }
-
+  .mosaic img { width: 100%; height: auto; display: block; margin: 0; padding: 0; border: 0;
+    break-inside: avoid; vertical-align: bottom; background: #0a0a0a;
+    opacity: 0; transition: opacity .5s ease; }
+  .mosaic img.on { opacity: 1; }
   .scrim { position: fixed; inset: 0; background: rgba(0,0,0,0.46); pointer-events: none; z-index: 5; }
   .vignette { position: fixed; inset: 0; pointer-events: none; z-index: 6;
     background: radial-gradient(ellipse 120% 90% at 50% 50%, rgba(0,0,0,0) 38%, rgba(0,0,0,0.55) 100%); }
-
   .titlewrap { position: fixed; inset: 0; z-index: 10; display: flex; flex-direction: column;
     align-items: center; justify-content: center; pointer-events: none; }
   .title { font-family: 'Cormorant', serif; font-weight: 300; color: #ffffff;
     font-size: clamp(40px, 9vw, 132px); letter-spacing: clamp(8px, 2.4vw, 40px);
     text-transform: uppercase; line-height: 1; text-indent: clamp(8px, 2.4vw, 40px);
     text-shadow: 0 2px 60px rgba(0,0,0,0.6); white-space: nowrap; }
-
   .player { position: fixed; right: 22px; bottom: 22px; z-index: 20; display: flex;
     align-items: center; gap: 11px; padding: 9px 15px 9px 9px; background: rgba(10,10,12,0.55);
     backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
     border: 1px solid rgba(255,255,255,0.12); border-radius: 40px; cursor: pointer;
-    box-shadow: 0 8px 40px rgba(0,0,0,0.5); user-select: none; }
+    box-shadow: 0 8px 40px rgba(0,0,0,0.5); user-select: none; max-width: 240px; }
   .player .icon { width: 26px; height: 26px; min-width: 26px; border-radius: 50%;
     border: 1px solid rgba(255,255,255,0.5); display: flex; align-items: center;
     justify-content: center; color: #fff; font-size: 9px; line-height: 1; }
   .player .meta { display: flex; flex-direction: column; line-height: 1.25; overflow: hidden; }
   .player .track { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.06em;
-    color: #fff; white-space: nowrap; }
+    color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
   .player .status { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.18em;
     text-transform: uppercase; color: rgba(255,255,255,0.4); white-space: nowrap; }
-
-  /* hidden youtube audio host */
   #yt { position: fixed; width: 1px; height: 1px; left: -9999px; top: -9999px; opacity: 0; pointer-events: none; }
 </style>
 </head>
 <body>
-
   <div class="mosaic" id="mosaic"></div>
-
   <div class="scrim"></div>
   <div class="vignette"></div>
-
   <div class="titlewrap"><div class="title">Temet Nosce</div></div>
-
   <div class="player" id="player">
     <div class="icon" id="icon">&#9658;</div>
     <div class="meta">
-      <span class="track">What's Up Danger</span>
+      <span class="track" id="track">Shuffle Mix</span>
       <span class="status" id="status">Paused</span>
     </div>
   </div>
-
   <div id="yt"></div>
-
 <script>
-  /* ---- 59 images, shuffled fresh on every page load (Fisher–Yates) ---- */
-  var files = [
-    "01.jpg","02.webp","03.webp","04.webp","05.jpg","06.webp","07.jpg","08.webp","09.jpg","10.webp",
-    "11.jpg","12.webp","13.jpg","14.jpg","15.jpg","16.jpg","17.jpg","18.jpg","19.webp","20.webp",
-    "21.jpg","22.webp","23.jpg","24.jpg","25.jpg","26.webp","27.jpg","28.jpg","29.webp","30.jpg",
-    "31.webp","33.jpg","34.jpg","35.webp","36.jpg","37.jpg","38.jpg","39.webp","40.webp",
-    "41.jpg","42.jpg","43.jpg","44.jpg","45.webp","46.jpg","47.jpg","48.webp","49.jpg","50.webp",
-    "51.jpg","52.jpg","53.webp","54.webp","55.jpg","56.webp","57.jpg","58.webp","59.jpg","60.jpg"
+  /* [srcset, fallbackSrc, width, height] - responsive: browser picks the right size per screen */
+  var imgs = [
+    ["images/01-400.webp 400w, images/01-540.webp 540w", "images/01-400.webp", 540, 540],
+    ["images/02-400.webp 400w, images/02-800.webp 800w, images/02-1200.webp 1200w", "images/02-400.webp", 1200, 1200],
+    ["images/03-400.webp 400w, images/03-600.webp 600w", "images/03-400.webp", 600, 1200],
+    ["images/04-400.webp 400w, images/04-736.webp 736w", "images/04-400.webp", 736, 1308],
+    ["images/05-400.webp 400w, images/05-735.webp 735w", "images/05-400.webp", 735, 1040],
+    ["images/06-400.webp 400w, images/06-800.webp 800w, images/06-1178.webp 1178w", "images/06-400.webp", 1178, 2094],
+    ["images/07-400.webp 400w, images/07-736.webp 736w", "images/07-400.webp", 736, 736],
+    ["images/08-400.webp 400w, images/08-800.webp 800w, images/08-979.webp 979w", "images/08-400.webp", 979, 1920],
+    ["images/09-400.webp 400w, images/09-735.webp 735w", "images/09-400.webp", 735, 746],
+    ["images/10-400.webp 400w, images/10-640.webp 640w", "images/10-400.webp", 640, 956],
+    ["images/11-400.webp 400w, images/11-800.webp 800w, images/11-1080.webp 1080w", "images/11-400.webp", 1080, 1350],
+    ["images/12-400.webp 400w, images/12-800.webp 800w, images/12-867.webp 867w", "images/12-400.webp", 867, 1200],
+    ["images/13-400.webp 400w, images/13-800.webp 800w, images/13-1200.webp 1200w", "images/13-400.webp", 1200, 1200],
+    ["images/14-400.webp 400w, images/14-736.webp 736w", "images/14-400.webp", 736, 1308],
+    ["images/15-400.webp 400w, images/15-800.webp 800w, images/15-853.webp 853w", "images/15-400.webp", 853, 2048],
+    ["images/16-400.webp 400w, images/16-736.webp 736w", "images/16-400.webp", 736, 736],
+    ["images/17-400.webp 400w, images/17-800.webp 800w, images/17-861.webp 861w", "images/17-400.webp", 861, 1047],
+    ["images/18-400.webp 400w, images/18-540.webp 540w", "images/18-400.webp", 540, 540],
+    ["images/19-400.webp 400w, images/19-800.webp 800w, images/19-1080.webp 1080w", "images/19-400.webp", 1080, 1920],
+    ["images/20-400.webp 400w, images/20-800.webp 800w, images/20-950.webp 950w", "images/20-400.webp", 950, 1688],
+    ["images/21-400.webp 400w, images/21-473.webp 473w", "images/21-400.webp", 473, 591],
+    ["images/22-400.webp 400w, images/22-800.webp 800w, images/22-1080.webp 1080w", "images/22-400.webp", 1080, 1920],
+    ["images/23-400.webp 400w, images/23-736.webp 736w", "images/23-400.webp", 736, 1308],
+    ["images/24-400.webp 400w, images/24-675.webp 675w", "images/24-400.webp", 675, 1200],
+    ["images/25-400.webp 400w, images/25-800.webp 800w, images/25-1080.webp 1080w", "images/25-400.webp", 1080, 1920],
+    ["images/26-400.webp 400w, images/26-800.webp 800w, images/26-979.webp 979w", "images/26-400.webp", 979, 1920],
+    ["images/27-400.webp 400w, images/27-800.webp 800w, images/27-1200.webp 1200w", "images/27-400.webp", 1200, 2133],
+    ["images/28-400.webp 400w, images/28-736.webp 736w", "images/28-400.webp", 736, 740],
+    ["images/29-400.webp 400w, images/29-736.webp 736w", "images/29-400.webp", 736, 1308],
+    ["images/30-400.webp 400w, images/30-800.webp 800w, images/30-1080.webp 1080w", "images/30-400.webp", 1080, 1920],
+    ["images/31-400.webp 400w, images/31-736.webp 736w", "images/31-400.webp", 736, 1472],
+    ["images/33-400.webp 400w, images/33-736.webp 736w", "images/33-400.webp", 736, 1152],
+    ["images/34-400.webp 400w, images/34-540.webp 540w", "images/34-400.webp", 540, 540],
+    ["images/35-400.webp 400w, images/35-600.webp 600w", "images/35-400.webp", 600, 1200],
+    ["images/36-400.webp 400w, images/36-675.webp 675w", "images/36-400.webp", 675, 1200],
+    ["images/37-400.webp 400w, images/37-736.webp 736w", "images/37-400.webp", 736, 736],
+    ["images/38-400.webp 400w, images/38-698.webp 698w", "images/38-400.webp", 698, 719],
+    ["images/39-400.webp 400w, images/39-736.webp 736w", "images/39-400.webp", 736, 1104],
+    ["images/40-400.webp 400w, images/40-720.webp 720w", "images/40-400.webp", 720, 900],
+    ["images/41-400.webp 400w, images/41-736.webp 736w", "images/41-400.webp", 736, 736],
+    ["images/42-400.webp 400w, images/42-800.webp 800w, images/42-1080.webp 1080w", "images/42-400.webp", 1080, 1920],
+    ["images/43-400.webp 400w, images/43-736.webp 736w", "images/43-400.webp", 736, 920],
+    ["images/44-400.webp 400w, images/44-736.webp 736w", "images/44-400.webp", 736, 736],
+    ["images/45-400.webp 400w, images/45-800.webp 800w, images/45-1200.webp 1200w", "images/45-400.webp", 1200, 1710],
+    ["images/46-400.webp 400w, images/46-736.webp 736w", "images/46-400.webp", 736, 736],
+    ["images/47-400.webp 400w, images/47-736.webp 736w", "images/47-400.webp", 736, 1308],
+    ["images/48-400.webp 400w, images/48-676.webp 676w", "images/48-400.webp", 676, 1200],
+    ["images/49-400.webp 400w, images/49-715.webp 715w", "images/49-400.webp", 715, 1098],
+    ["images/50-400.webp 400w, images/50-800.webp 800w, images/50-1080.webp 1080w", "images/50-400.webp", 1080, 1920],
+    ["images/51-400.webp 400w, images/51-564.webp 564w", "images/51-400.webp", 564, 705],
+    ["images/52-400.webp 400w, images/52-736.webp 736w", "images/52-400.webp", 736, 736],
+    ["images/53-400.webp 400w, images/53-547.webp 547w", "images/53-400.webp", 547, 1200],
+    ["images/54-400.webp 400w, images/54-800.webp 800w, images/54-804.webp 804w", "images/54-400.webp", 804, 1024],
+    ["images/55-400.webp 400w, images/55-800.webp 800w, images/55-1152.webp 1152w", "images/55-400.webp", 1152, 2048],
+    ["images/56-400.webp 400w, images/56-800.webp 800w, images/56-1080.webp 1080w", "images/56-400.webp", 1080, 1920],
+    ["images/57-400.webp 400w, images/57-800.webp 800w, images/57-981.webp 981w", "images/57-400.webp", 981, 1920],
+    ["images/58-400.webp 400w, images/58-736.webp 736w", "images/58-400.webp", 736, 1307],
+    ["images/59-400.webp 400w, images/59-800.webp 800w, images/59-1200.webp 1200w", "images/59-400.webp", 1200, 927],
+    ["images/60-400.webp 400w, images/60-736.webp 736w", "images/60-400.webp", 736, 736]
   ];
-  for (var i = files.length - 1; i > 0; i--) {
+  for (var i = imgs.length - 1; i > 0; i--) {
     var j = Math.floor(Math.random() * (i + 1));
-    var t = files[i]; files[i] = files[j]; files[j] = t;
+    var t = imgs[i]; imgs[i] = imgs[j]; imgs[j] = t;
   }
   var m = document.getElementById('mosaic');
-  m.innerHTML = files.map(function(f){
-    return '<img src="images/' + f + '" loading="lazy" alt="">';
+  m.innerHTML = imgs.map(function(a){
+    return '<img srcset="' + a[0] + '" sizes="25vw" src="' + a[1] + '" width="' + a[2] +
+           '" height="' + a[3] + '" loading="lazy" decoding="async" alt="" onload="this.classList.add(\'on\')">';
   }).join('');
 
-  /* ---- Real music: hidden YouTube player wired to the corner button ---- */
-  var YT_ID = "Y88LVU7MAe4"; // Blackway & Black Caviar - What's Up Danger (Official Audio)
-  var player, ready = false, pending = false, playing = false;
-  var iconEl = document.getElementById('icon');
-  var statusEl = document.getElementById('status');
-
-  var tag = document.createElement('script');
-  tag.src = "https://www.youtube.com/iframe_api";
-  document.head.appendChild(tag);
-
-  window.onYouTubeIframeAPIReady = function () {
-    player = new YT.Player('yt', {
-      height: '1', width: '1', videoId: YT_ID,
-      playerVars: { autoplay: 0, controls: 0, playsinline: 1, loop: 1, playlist: YT_ID },
-      events: {
-        'onReady': function(){ ready = true; if (pending) doPlay(); },
-        'onStateChange': function(e){
-          if (e.data === YT.PlayerState.PLAYING) setUI(true);
-          if (e.data === YT.PlayerState.PAUSED || e.data === YT.PlayerState.ENDED) setUI(false);
-        }
-      }
-    });
+  /* ---- Music: YouTube playlist, shuffled ---- */
+  var PLAYLIST = "PLAYYu5uCqghA";   // <-- senin playlist'in (list= kısmı)
+  var player, ready=false, pending=false, playing=false;
+  var iconEl=document.getElementById('icon'), statusEl=document.getElementById('status'), trackEl=document.getElementById('track');
+  var tag=document.createElement('script'); tag.src="https://www.youtube.com/iframe_api"; document.head.appendChild(tag);
+  window.onYouTubeIframeAPIReady=function(){
+    player=new YT.Player('yt',{height:'1',width:'1',
+      playerVars:{listType:'playlist', list:PLAYLIST, autoplay:0, controls:0, playsinline:1, loop:1},
+      events:{'onReady':function(){ ready=true; try{player.setShuffle(true);}catch(e){} if(pending) doPlay(); },
+        'onStateChange':function(e){
+          if(e.data===YT.PlayerState.PLAYING){ setUI(true); updateTitle(); }
+          if(e.data===YT.PlayerState.PAUSED){ setUI(false); }
+        }}});
   };
-
-  function setUI(on){
-    playing = on;
-    iconEl.innerHTML = on ? "&#10074;&#10074;" : "&#9658;";
-    statusEl.textContent = on ? "Now Playing" : "Paused";
-  }
-  function doPlay(){
-    if (!ready){ pending = true; return; }
-    try { player.unMute(); player.setVolume(80); player.playVideo(); } catch(e){}
-  }
-  function doPause(){ try { player.pauseVideo(); } catch(e){} }
-
-  document.getElementById('player').addEventListener('click', function(){
-    if (playing) doPause(); else doPlay();
-  });
+  function updateTitle(){ try{ var d=player.getVideoData(); if(d&&d.title) trackEl.textContent=d.title; }catch(e){} }
+  function setUI(on){ playing=on; iconEl.innerHTML=on?"&#10074;&#10074;":"&#9658;"; statusEl.textContent=on?"Now Playing":"Paused"; }
+  function doPlay(){ if(!ready){pending=true;return;} try{ player.setShuffle(true); player.unMute(); player.setVolume(80); player.playVideo(); }catch(e){} }
+  function doPause(){ try{ player.pauseVideo(); }catch(e){} }
+  document.getElementById('player').addEventListener('click',function(){ if(playing) doPause(); else doPlay(); });
 </script>
 </body>
 </html>

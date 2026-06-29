@@ -8,165 +8,46 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant:wght@300;400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  html, body { margin: 0; padding: 0; background: #000000; }
-  * { box-sizing: border-box; }
-  ::selection { background: rgba(255,255,255,0.15); }
-  .mosaic { display: flex; width: 100%; align-items: flex-start; }
-  .col { flex: 1 1 0; min-width: 0; font-size: 0; line-height: 0; }
-  .col img { width: 100%; height: auto; display: block; margin: 0; padding: 0; border: 0;
-    vertical-align: bottom; background: #0a0a0a; opacity: 0; transition: opacity .5s ease; }
-  .col img.on { opacity: 1; }
-  .scrim { position: fixed; inset: 0; background: rgba(0,0,0,0.46); pointer-events: none; z-index: 5; }
-  .vignette { position: fixed; inset: 0; pointer-events: none; z-index: 6;
-    background: radial-gradient(ellipse 120% 90% at 50% 50%, rgba(0,0,0,0) 38%, rgba(0,0,0,0.55) 100%); }
-  .titlewrap { position: fixed; inset: 0; z-index: 10; display: flex; flex-direction: column;
-    align-items: center; justify-content: center; pointer-events: none; }
-  .title { font-family: 'Cormorant', serif; font-weight: 300; color: #ffffff;
+  html, body { margin: 0; padding: 0; height: 100%; background: #000000; overflow: hidden; }
+  body { display: flex; align-items: center; justify-content: center; }
+  .title {
+    font-family: 'Cormorant', serif; font-weight: 300; color: #ffffff;
     font-size: clamp(40px, 9vw, 132px); letter-spacing: clamp(8px, 2.4vw, 40px);
     text-transform: uppercase; line-height: 1; text-indent: clamp(8px, 2.4vw, 40px);
-    text-shadow: 0 2px 60px rgba(0,0,0,0.6); white-space: nowrap; }
-  .ride { position: fixed; right: 22px; bottom: 22px; z-index: 21; display: flex; align-items: center; gap: 11px;
-    padding: 9px 16px 9px 9px; background: rgba(10,10,12,0.55); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-    border: 1px solid rgba(230,255,42,0.45); border-radius: 22px; cursor: pointer; user-select: none; max-width: 280px;
-    box-shadow: 0 8px 40px rgba(0,0,0,0.5); animation: ridepulse 2.4s ease-in-out infinite; }
-  .ride .rdot { width: 26px; height: 26px; min-width: 26px; border-radius: 50%; background: #e6ff2a; color: #000;
-    display: flex; align-items: center; justify-content: center; font-size: 9px; line-height: 1; }
-  .ride .rmeta { display: flex; flex-direction: column; line-height: 1.2; overflow: hidden; }
-  .ride .rlabel { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
-    color: #fff; white-space: nowrap; }
-  .ride .rsong { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.04em; color: rgba(255,255,255,0.55);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px;
-    max-height: 0; opacity: 0; transition: max-height .45s ease, opacity .45s ease, margin-top .45s ease; }
-  .ride.riding { animation: none; border-color: rgba(255,255,255,0.14); }
-  .ride.riding .rsong { max-height: 15px; opacity: 1; margin-top: 2px; }
-  @keyframes ridepulse {
-    0%,100% { transform: scale(1); box-shadow: 0 8px 40px rgba(0,0,0,0.5); border-color: rgba(230,255,42,0.35); }
-    50%     { transform: scale(1.05); box-shadow: 0 8px 52px rgba(230,255,42,0.40); border-color: rgba(230,255,42,0.8); }
+    text-shadow: 0 2px 60px rgba(0,0,0,0.6); white-space: nowrap;
   }
+  .player { position: fixed; right: 22px; bottom: 22px; z-index: 20; display: flex;
+    align-items: center; gap: 11px; padding: 9px 15px 9px 9px; background: rgba(10,10,12,0.55);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.12); border-radius: 40px; cursor: pointer;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.5); user-select: none; max-width: 240px; }
+  .player .icon { width: 26px; height: 26px; min-width: 26px; border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.5); display: flex; align-items: center;
+    justify-content: center; color: #fff; font-size: 9px; line-height: 1; }
+  .player .meta { display: flex; flex-direction: column; line-height: 1.25; overflow: hidden; }
+  .player .track { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.06em;
+    color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
+  .player .status { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.18em;
+    text-transform: uppercase; color: rgba(255,255,255,0.4); white-space: nowrap; }
   #yt { position: fixed; width: 1px; height: 1px; left: -9999px; top: -9999px; opacity: 0; pointer-events: none; }
 </style>
 </head>
 <body>
-  <div class="mosaic" id="mosaic">
-    <div class="col" id="c0"></div>
-    <div class="col" id="c1"></div>
-    <div class="col" id="c2"></div>
-    <div class="col" id="c3"></div>
-  </div>
-  <div class="scrim"></div>
-  <div class="vignette"></div>
-  <div class="titlewrap"><div class="title">Temet Nosce</div></div>
-  <div class="ride" id="ride">
-    <div class="rdot" id="rdot">&#9658;</div>
-    <div class="rmeta">
-      <span class="rlabel" id="rlabel">play me</span>
-      <span class="rsong" id="rsong"></span>
+  <div class="title">Temet Nosce</div>
+
+  <div class="player" id="player">
+    <div class="icon" id="icon">&#9658;</div>
+    <div class="meta">
+      <span class="track" id="track">Shuffle Mix</span>
+      <span class="status" id="status">Paused</span>
     </div>
   </div>
   <div id="yt"></div>
+
 <script>
-  var POOL = {"01": ["images/01-400.webp 400w, images/01-540.webp 540w", "01.jpg", 540, 540], "02": ["images/02-400.webp 400w, images/02-800.webp 800w, images/02-1200.webp 1200w", "02.webp", 1200, 1200], "03": ["images/03-400.webp 400w, images/03-600.webp 600w", "03.webp", 600, 1200], "04": ["images/04-400.webp 400w, images/04-736.webp 736w", "04.webp", 736, 1308], "05": ["images/05-400.webp 400w, images/05-735.webp 735w", "05.jpg", 735, 1040], "06": ["images/06-400.webp 400w, images/06-800.webp 800w, images/06-1178.webp 1178w", "06.webp", 1178, 2094], "07": ["images/07-400.webp 400w, images/07-736.webp 736w", "07.jpg", 736, 736], "08": ["images/08-400.webp 400w, images/08-800.webp 800w, images/08-979.webp 979w", "08.webp", 979, 1920], "09": ["images/09-400.webp 400w, images/09-735.webp 735w", "09.jpg", 735, 746], "10": ["images/10-400.webp 400w, images/10-640.webp 640w", "10.webp", 640, 956], "11": ["images/11-400.webp 400w, images/11-800.webp 800w, images/11-1080.webp 1080w", "11.jpg", 1080, 1350], "12": ["images/12-400.webp 400w, images/12-800.webp 800w, images/12-867.webp 867w", "12.webp", 867, 1200], "13": ["images/13-400.webp 400w, images/13-800.webp 800w, images/13-1200.webp 1200w", "13.jpg", 1200, 1200], "14": ["images/14-400.webp 400w, images/14-736.webp 736w", "14.jpg", 736, 1308], "15": ["images/15-400.webp 400w, images/15-800.webp 800w, images/15-853.webp 853w", "15.jpg", 853, 2048], "16": ["images/16-400.webp 400w, images/16-736.webp 736w", "16.jpg", 736, 736], "17": ["images/17-400.webp 400w, images/17-800.webp 800w, images/17-861.webp 861w", "17.jpg", 861, 1047], "18": ["images/18-400.webp 400w, images/18-540.webp 540w", "18.jpg", 540, 540], "19": ["images/19-400.webp 400w, images/19-800.webp 800w, images/19-1080.webp 1080w", "19.webp", 1080, 1920], "20": ["images/20-400.webp 400w, images/20-800.webp 800w, images/20-950.webp 950w", "20.webp", 950, 1688], "21": ["images/21-400.webp 400w, images/21-473.webp 473w", "21.jpg", 473, 591], "22": ["images/22-400.webp 400w, images/22-800.webp 800w, images/22-1080.webp 1080w", "22.webp", 1080, 1920], "23": ["images/23-400.webp 400w, images/23-736.webp 736w", "23.jpg", 736, 1308], "24": ["images/24-400.webp 400w, images/24-675.webp 675w", "24.jpg", 675, 1200], "25": ["images/25-400.webp 400w, images/25-800.webp 800w, images/25-1080.webp 1080w", "25.jpg", 1080, 1920], "26": ["images/26-400.webp 400w, images/26-800.webp 800w, images/26-979.webp 979w", "26.webp", 979, 1920], "27": ["images/27-400.webp 400w, images/27-800.webp 800w, images/27-1200.webp 1200w", "27.jpg", 1200, 2133], "28": ["images/28-400.webp 400w, images/28-736.webp 736w", "28.jpg", 736, 740], "29": ["images/29-400.webp 400w, images/29-736.webp 736w", "29.webp", 736, 1308], "30": ["images/30-400.webp 400w, images/30-800.webp 800w, images/30-1080.webp 1080w", "30.jpg", 1080, 1920], "31": ["images/31-400.webp 400w, images/31-736.webp 736w", "31.webp", 736, 1472], "33": ["images/33-400.webp 400w, images/33-736.webp 736w", "33.jpg", 736, 1152], "34": ["images/34-400.webp 400w, images/34-540.webp 540w", "34.jpg", 540, 540], "35": ["images/35-400.webp 400w, images/35-600.webp 600w", "35.webp", 600, 1200], "36": ["images/36-400.webp 400w, images/36-675.webp 675w", "36.jpg", 675, 1200], "37": ["images/37-400.webp 400w, images/37-736.webp 736w", "37.jpg", 736, 736], "38": ["images/38-400.webp 400w, images/38-698.webp 698w", "38.jpg", 698, 719], "39": ["images/39-400.webp 400w, images/39-736.webp 736w", "39.webp", 736, 1104], "40": ["images/40-400.webp 400w, images/40-720.webp 720w", "40.webp", 720, 900], "41": ["images/41-400.webp 400w, images/41-736.webp 736w", "41.jpg", 736, 736], "42": ["images/42-400.webp 400w, images/42-800.webp 800w, images/42-1080.webp 1080w", "42.jpg", 1080, 1920], "43": ["images/43-400.webp 400w, images/43-736.webp 736w", "43.jpg", 736, 920], "44": ["images/44-400.webp 400w, images/44-736.webp 736w", "44.jpg", 736, 736], "45": ["images/45-400.webp 400w, images/45-800.webp 800w, images/45-1200.webp 1200w", "45.webp", 1200, 1710], "46": ["images/46-400.webp 400w, images/46-736.webp 736w", "46.jpg", 736, 736], "47": ["images/47-400.webp 400w, images/47-736.webp 736w", "47.jpg", 736, 1308], "48": ["images/48-400.webp 400w, images/48-676.webp 676w", "48.webp", 676, 1200], "49": ["images/49-400.webp 400w, images/49-715.webp 715w", "49.jpg", 715, 1098], "50": ["images/50-400.webp 400w, images/50-800.webp 800w, images/50-1080.webp 1080w", "50.webp", 1080, 1920], "51": ["images/51-400.webp 400w, images/51-564.webp 564w", "51.jpg", 564, 705], "52": ["images/52-400.webp 400w, images/52-736.webp 736w", "52.jpg", 736, 736], "53": ["images/53-400.webp 400w, images/53-547.webp 547w", "53.webp", 547, 1200], "54": ["images/54-400.webp 400w, images/54-800.webp 800w, images/54-804.webp 804w", "54.webp", 804, 1024], "55": ["images/55-400.webp 400w, images/55-800.webp 800w, images/55-1152.webp 1152w", "55.jpg", 1152, 2048], "56": ["images/56-400.webp 400w, images/56-800.webp 800w, images/56-1080.webp 1080w", "56.webp", 1080, 1920], "57": ["images/57-400.webp 400w, images/57-800.webp 800w, images/57-981.webp 981w", "57.jpg", 981, 1920], "58": ["images/58-400.webp 400w, images/58-736.webp 736w", "58.webp", 736, 1307], "59": ["images/59-400.webp 400w, images/59-800.webp 800w, images/59-1200.webp 1200w", "59.jpg", 1200, 927], "60": ["images/60-400.webp 400w, images/60-736.webp 736w", "60.jpg", 736, 736]};
-  var CORE = [["16", "06", "58", "13", "50", "20", "56", "38", "07", "09", "04", "19", "11", "10"], ["47", "28", "27", "36", "37", "18", "15", "42", "41", "59", "52", "24", "35", "60", "08", "02"], ["53", "55", "21", "25", "31", "46", "23", "30", "29", "12", "03", "34", "45", "17"], ["51", "40", "33", "26", "39", "14", "49", "43", "44", "22", "57", "05", "01", "48", "54"]];
-  var NUMS = Object.keys(POOL);
-
-  // ---- başlangıçta çekirdeğin kaç piksel içinden açılsın (0 = en üstünden) ----
-  var START_OFFSET = 0;
-
-  var cols = [document.getElementById('c0'),document.getElementById('c1'),
-              document.getElementById('c2'),document.getElementById('c3')];
-  var colR = [0,0,0,0]; // sütun yükseklik oranı (denge için, reflow'suz)
-
-  var allImgs = [];  // bellek koruması için takip
-  function makeImg(num){
-    var a = POOL[num];
-    var img = document.createElement('img');
-    img.dataset.ss = a[0];
-    img.dataset.src = 'images/' + a[1];
-    img.setAttribute('srcset', a[0]);
-    img.setAttribute('sizes', '25vw');
-    img.src = 'images/' + a[1];
-    img.width = a[2]; img.height = a[3];
-    img.loading = 'lazy'; img.decoding = 'async'; img.alt = '';
-    img.onload = function(){ img.classList.add('on'); };
-    img.onerror = function(){ if(img._un) return; img.onerror=null; img.removeAttribute('srcset'); img.removeAttribute('sizes'); img.src=img.dataset.src; img.classList.add('on'); };
-    allImgs.push(img);
-    return img;
-  }
-  // ekrandan uzak resimlerin piksellerini boşalt / yaklaşınca geri yükle (bellek sabit kalsın)
-  function unloadImg(img){ if(!img.getAttribute('src')) return; img._un=true; img.classList.remove('on'); img.removeAttribute('src'); img.removeAttribute('srcset'); }
-  function reloadImg(img){ if(img.getAttribute('src')) return; img._un=false; img.setAttribute('srcset', img.dataset.ss); img.setAttribute('sizes','25vw'); img.src=img.dataset.src; }
-  function memGuard(){
-    var top=(window.scrollY||document.documentElement.scrollTop);
-    var bot=top+window.innerHeight, B=window.innerHeight*2.5;
-    var lo=top-B, hi=bot+B, un=[], re=[];
-    for(var i=0;i<allImgs.length;i++){
-      var im=allImgs[i], y=im.offsetTop, h=im.offsetHeight;     // okuma fazı
-      if(y+h<lo || y>hi){ if(im.getAttribute('src')) un.push(im); }
-      else { if(!im.getAttribute('src')) re.push(im); }
-    }
-    for(var i=0;i<un.length;i++) unloadImg(un[i]);              // yazma fazı
-    for(var i=0;i<re.length;i++) reloadImg(re[i]);
-  }
-  function ratio(num){ var a=POOL[num]; return a[3]/a[2]; }
-  function shortest(){ var mi=0,mh=colR[0]; for(var i=1;i<4;i++){ if(colR[i]<mh){mh=colR[i];mi=i;} } return mi; }
-  function shuffle(arr){ var a=arr.slice(); for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;} return a; }
-
-  var TARGET=null;   // başlangıçta ortalanacak resim (en sol sütundaki 07)
-  function buildCore(){
-    for(var c=0;c<4;c++){
-      for(var k=0;k<CORE[c].length;k++){
-        var num=CORE[c][k];
-        var im=makeImg(num);
-        cols[c].appendChild(im);
-        colR[c]+=ratio(num);
-        if(c===0 && num==="07"){ TARGET=im; }
-      }
-    }
-  }
-  function appendBatch(){
-    var s=shuffle(NUMS);
-    for(var i=0;i<s.length;i++){ var c=shortest(); cols[c].appendChild(makeImg(s[i])); colR[c]+=ratio(s[i]); }
-  }
-  function prependBatch(){
-    var before=document.documentElement.scrollHeight;
-    var s=shuffle(NUMS);
-    for(var i=0;i<s.length;i++){ var c=shortest(); cols[c].insertBefore(makeImg(s[i]), cols[c].firstChild); colR[c]+=ratio(s[i]); }
-    var after=document.documentElement.scrollHeight;
-    window.scrollTo(0, (window.scrollY||document.documentElement.scrollTop) + (after-before));
-  }
-
-  // ---- kurulum ----
-  buildCore();
-  appendBatch(); appendBatch();          // alta tampon
-  prependBatch(); prependBatch();         // üste tampon (scroll telafili)
-  // 7 numaralı resmin (en sol sütun) tam ortasını ekranın dikey ortasına (TEMET NOSCE hizası) getir
-  function centerOnTarget(){
-    if(!TARGET) return;
-    var absTop = TARGET.getBoundingClientRect().top + (window.scrollY||document.documentElement.scrollTop);
-    var center = absTop + TARGET.offsetHeight/2;
-    window.scrollTo(0, Math.max(0, center - window.innerHeight/2));
-  }
-  // çift rAF: ilk düzen oturduktan sonra hizala (resim yüklemesini beklemeye gerek yok, yükseklikler oran ile ayrılıyor)
-  requestAnimationFrame(function(){ requestAnimationFrame(centerOnTarget); });
-
-  // ---- sonsuz kaydırma ----
-  var MAXB=80, downB=2, upB=2, ticking=false, lastGuard=0;
-  window.addEventListener('scroll', function(){
-    if(ticking) return; ticking=true;
-    requestAnimationFrame(function(){
-      var st=window.scrollY||document.documentElement.scrollTop;
-      var vh=window.innerHeight, sh=document.documentElement.scrollHeight;
-      if(st+vh > sh-1600 && downB<MAXB){ appendBatch(); downB++; }
-      if(st < 1600 && upB<MAXB){ prependBatch(); upB++; }
-      var now=Date.now(); if(now-lastGuard>400){ lastGuard=now; memGuard(); }
-      ticking=false;
-    });
-  }, {passive:true});
-
-  // ---- müzik: playlist + her açılışta gerçek shuffle ----
   var PLAYLIST = "PLAYYu5uCqghA";
   var player, ready=false, pending=false, playing=false, started=false;
-  var rdotEl=document.getElementById('rdot'), rsongEl=document.getElementById('rsong');
+  var iconEl=document.getElementById('icon'), statusEl=document.getElementById('status'), trackEl=document.getElementById('track');
   var tag=document.createElement('script'); tag.src="https://www.youtube.com/iframe_api"; document.head.appendChild(tag);
   window.onYouTubeIframeAPIReady=function(){
     player=new YT.Player('yt',{height:'1',width:'1',
@@ -177,14 +58,8 @@
           if(e.data===YT.PlayerState.PAUSED){ setUI(false); }
         }}});
   };
-  function cleanTitle(t){
-    if(!t) return '';
-    t=t.replace(/\s*[\(\[][^\)\]]*[\)\]]\s*/g,' ').trim();   // (Official Audio) [Lyrics] vb. kaldır
-    var i=t.indexOf(' - '); if(i>-1) t=t.slice(i+3).trim();  // "Sanatçı - Şarkı" -> "Şarkı"
-    return t;
-  }
-  function updateTitle(){ try{ var d=player.getVideoData(); if(d&&d.title) rsongEl.textContent=cleanTitle(d.title); }catch(e){} }
-  function setUI(on){ playing=on; rdotEl.innerHTML=on?"&#10074;&#10074;":"&#9658;"; }
+  function updateTitle(){ try{ var d=player.getVideoData(); if(d&&d.title) trackEl.textContent=d.title; }catch(e){} }
+  function setUI(on){ playing=on; iconEl.innerHTML=on?"&#10074;&#10074;":"&#9658;"; statusEl.textContent=on?"Now Playing":"Paused"; }
   function doPlay(){
     if(!ready){ pending=true; return; }
     try{
@@ -198,31 +73,7 @@
     }catch(e){}
   }
   function doPause(){ try{ player.pauseVideo(); }catch(e){} }
-
-  // ---- "play me": 45 dk boyunca smooth otomatik kaydırma ----
-  var RIDE_MS = 45*60*1000, RIDE_SPEED = 32;   // px/saniye (smooth ve sakin)
-  var riding=false, rideEnd=0, rideLast=0, rideFrac=0;
-  var rideEl=document.getElementById('ride'), rlabel=document.getElementById('rlabel');
-  function rideStep(t){
-    if(!riding) return;
-    if(!rideLast){ rideLast=t; requestAnimationFrame(rideStep); return; }
-    var dt=(t-rideLast)/1000; rideLast=t;
-    if(dt>0.1) dt=0.1;                          // arka plan sekmesinde sıçrama olmasın
-    if(t>=rideEnd){ stopRide(); return; }
-    rideFrac += RIDE_SPEED*dt;
-    var step=Math.floor(rideFrac);
-    if(step>=1){ window.scrollBy(0, step); rideFrac-=step; }
-    requestAnimationFrame(rideStep);
-  }
-  function startRide(){
-    riding=true; rideLast=0; rideFrac=0; rideEnd=performance.now()+RIDE_MS;
-    rideEl.classList.add('riding'); rlabel.textContent='enjoy the ride';
-    if(!playing) doPlay();
-    setTimeout(updateTitle, 600); setTimeout(updateTitle, 1800);   // şarkı adı belirsin
-    requestAnimationFrame(rideStep);
-  }
-  function stopRide(){ riding=false; rideEl.classList.remove('riding'); rlabel.textContent='play me'; doPause(); }
-  rideEl.addEventListener('click', function(){ if(riding) stopRide(); else startRide(); });
+  document.getElementById('player').addEventListener('click',function(){ if(playing) doPause(); else doPlay(); });
 </script>
 </body>
 </html>
